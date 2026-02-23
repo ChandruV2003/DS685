@@ -1,0 +1,76 @@
+services:
+  zenoh:
+    image: eclipse/zenoh:latest
+    command: ["--listen", "tcp/0.0.0.0:7447"]
+    ports:
+      - "7447:7447"
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ds685
+      POSTGRES_PASSWORD: ds685
+      POSTGRES_DB: ds685
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ds685 -d ds685"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  ingest:
+    build: ./ingest
+    environment:
+      DATABASE_URL: postgresql://ds685:ds685@postgres:5432/ds685
+      ZENOH_CONNECT: tcp/zenoh:7447
+      ZENOH_KEY_EXPR: maze/**/detections/v1/*
+      LOG_LEVEL: INFO
+    volumes:
+      - ./report:/out
+    depends_on:
+      zenoh:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  pipeline:
+    build:
+      context: ./turtlebot-maze
+      dockerfile: docker/Dockerfile.gpu
+      target: a2
+      args:
+        ROS_DISTRO: jazzy
+    environment:
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      MESA_GL_VERSION_OVERRIDE: "3.3"
+      GALLIUM_DRIVER: llvmpipe
+      ZENOH_CONNECT: tcp/zenoh:7447
+      ROBOT_ID: tb3_sim
+      IMAGE_TOPIC: /camera/image_raw
+      ODOM_TOPIC: /odom
+      BASE_FRAME: base_footprint
+      CAMERA_FRAME: camera_link
+      YOLO_MODEL: yolov8n.pt
+      MAX_FPS: "1.0"
+      LOG_LEVEL: INFO
+    depends_on:
+      zenoh:
+        condition: service_started
+      ingest:
+        condition: service_started
+    command: >
+      bash -lc '
+        set -euo pipefail
+        ros2 launch tb_worlds tb_a2_world.launch.py headless:=True x_pose:=0.08 y_pose:=3.60 yaw:=1.57 &
+        SIM_PID=$$!
+        trap "kill $$SIM_PID >/dev/null 2>&1 || true" EXIT
+        sleep 10
+        ros2 run tb_autonomy ds685_a2_detector.py
+      '
+
+volumes:
+  pgdata:

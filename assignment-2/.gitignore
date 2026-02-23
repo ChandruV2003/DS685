@@ -1,0 +1,5 @@
+# Ultralytics model weights downloaded at runtime
+*.pt
+
+# Optional local/debug captures
+assets/world/_*.png

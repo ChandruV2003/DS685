@@ -1,0 +1,30 @@
+<?xml version='1.0'?>
+<sdf version="1.7">
+  <model name="obj_laptop">
+    <pose>0 0 0.01 0 0 0</pose>
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.22 0.16 0.02</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.22 0.16 0.02</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.60 0.60 0.62 1</ambient>
+          <diffuse>0.60 0.60 0.62 1</diffuse>
+          <specular>0.05 0.05 0.05 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
+

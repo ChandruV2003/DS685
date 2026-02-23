@@ -1,0 +1,30 @@
+<?xml version='1.0'?>
+<sdf version="1.7">
+  <model name="obj_book">
+    <pose>0 0 0.015 0 0 0</pose>
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.15 0.10 0.03</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.15 0.10 0.03</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.75 0.15 0.15 1</ambient>
+          <diffuse>0.75 0.15 0.15 1</diffuse>
+          <specular>0.03 0.03 0.03 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
+
