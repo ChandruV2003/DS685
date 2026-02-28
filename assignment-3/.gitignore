@@ -1,0 +1,12 @@
+# Local data (images, crops, etc.)
+data/
+
+# Generated reports
+report/*.md
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Ultralytics / model weights
+*.pt
