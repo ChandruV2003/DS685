@@ -79,6 +79,17 @@ def main() -> None:
     parser.add_argument("--timeout", type=float, default=30.0)
     args = parser.parse_args()
 
+    # Prefer local weights under DATA_DIR if available (avoids flaky downloads).
+    data_dir = Path(os.getenv("DATA_DIR", "/data"))
+    try:
+        p = Path(args.model)
+        if (not p.is_absolute()) and ("/" not in args.model):
+            candidate = data_dir / args.model
+            if candidate.exists():
+                args.model = str(candidate)
+    except Exception:
+        pass
+
     rclpy.init()
     node = CropCapture(args.topic, Path(args.out), args.model, args.max_crops)
     start = time.time()
@@ -94,4 +105,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -6,8 +6,8 @@ TurtleBot3 (Gazebo Sim) → ROS 2 detector → Zenoh → PostgreSQL (events/keyf
 
 ## Runs
 
-- Run A (map build): `<RUN_A_UUID>`
-- Run B (query): `<RUN_B_UUID>`
+- Run A (map build): `c3022101-c153-4a48-b100-d42d0080c611`
+- Run B (query): `de1fec99-1142-47dd-a727-6cea247c89c1`
 
 ## System design
 
@@ -67,54 +67,68 @@ Graph (Apache AGE):
 Generate counts + histogram:
 
 ```bash
-docker compose run --rm ingest python /app/report.py
+docker compose run --rm ingest python /app/report.py --run-id c3022101-c153-4a48-b100-d42d0080c611
 ```
 
 Fill in the latest numbers:
 
-- Detection events: `<N_EVENTS>`
-- Detections: `<N_DETECTIONS>`
-- Keyframes with map pose: `<N_KEYFRAMES_MAP_OK>`
-- Detection embeddings: `<N_EMBEDDINGS>`
-- Places: `<N_PLACES>`
-- Object landmarks: `<N_LANDMARKS>`
+- Detection events: `487`
+- Detections: `309`
+- Keyframes with map pose: `120`
+- Detection embeddings: `80`
+- Places: `13`
+- Object landmarks: `18`
 
 ## Required queries (evidence)
 
 ### Vector: top-k similar detections for a query crop
 
 ```bash
-docker compose run --rm semantics /app/vector_query.py --run-id <RUN_A_UUID> /data/query/<crop>.jpg --topk 10
+docker compose run --rm semantics /app/vector_query.py --run-id c3022101-c153-4a48-b100-d42d0080c611 /data/query_run_b/q_04e59915-c5e1-4535-b3bc-1179b9fc2dff_bed.jpg --topk 10
 ```
 
 Paste output snippet here:
 
 ```
-<PASTE OUTPUT>
+Top matches:
+- det_pk=144 sim=0.9648 class=bed conf=0.649 place=p_-2_-1 event=e7d268a4-1298-4310-8a8e-30ba64f3deef stamp=1970-01-01 00:05:38.652000+00:00
+- det_pk=150 sim=0.9478 class=bed conf=0.732 place=p_-1_-1 event=1d2e606d-8e68-4e25-8995-5ea5c66bd92c stamp=1970-01-01 00:05:43.650000+00:00
+- det_pk=204 sim=0.9452 class=bed conf=0.732 place=p_-1_-1 event=ce8b3c57-be95-4853-a763-5160c2925709 stamp=1970-01-01 00:06:36.750000+00:00
+- det_pk=208 sim=0.9451 class=bed conf=0.744 place=p_-1_-1 event=3c048086-44b8-42cc-9a3d-f7200ce01ad8 stamp=1970-01-01 00:06:40.752000+00:00
+- det_pk=156 sim=0.9445 class=bed conf=0.737 place=p_-1_-1 event=e17f8cad-e81a-4a77-bf9a-7cb0a913fca3 stamp=1970-01-01 00:05:49.701000+00:00
 ```
 
 ### Graph: reachable places within N hops containing an object class
 
 ```bash
-docker compose run --rm semantics /app/graph_query.py --run-id <RUN_A_UUID> --start-place p_0_0 --class "stop sign" --hops 2
+docker compose run --rm semantics /app/graph_query.py --run-id c3022101-c153-4a48-b100-d42d0080c611 --start-place p_-1_-1 --class "bed" --hops 2
 ```
 
 Paste output snippet here:
 
 ```
-<PASTE OUTPUT>
+Reachable places:
+- p_-1_-1
+- p_-2_-1
 ```
 
 ### Re-localization: top-3 candidate places from query crops
 
 ```bash
-docker compose run --rm semantics /app/relocalize.py --run-id <RUN_A_UUID> /data/query/<crop1>.jpg /data/query/<crop2>.jpg
+docker compose run --rm semantics /app/relocalize.py --run-id c3022101-c153-4a48-b100-d42d0080c611 /data/query_run_b/q_04e59915-c5e1-4535-b3bc-1179b9fc2dff_bed.jpg
 ```
 
 Paste output snippet here:
 
 ```
-<PASTE OUTPUT>
+Top places:
+- p_-1_-1: score=18.5369
+- p_0_3: score=9.6395
+- p_-2_-1: score=4.7174
+
+Best pose hypothesis (mean of keyframes in best place):
+- place_id=p_-1_-1
+- map_x=-0.8566066512862444 map_y=-0.7592771923044432 map_yaw=0.9230464109692946
 ```
 
 ## Success + failure analysis
@@ -135,4 +149,3 @@ Paste output snippet here:
 - Use a larger YOLO model (or tune confidence threshold) to reduce false positives.
 - Add per-landmark mean embedding update + cross-place fusion to handle boundary cases.
 - Increase exploration coverage in Run A to densify the semantic map.
-

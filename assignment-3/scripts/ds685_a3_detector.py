@@ -98,12 +98,22 @@ class DetectorPublisher(Node):
         self.zenoh_connect = os.getenv("ZENOH_CONNECT", "tcp/zenoh:7447")
         self.key_prefix = os.getenv("ZENOH_PREFIX", "maze")
 
+        data_dir = Path(os.getenv("DATA_DIR", "/data"))
         self.save_images = _truthy_env("SAVE_IMAGES", "0")
         self.save_all_images = _truthy_env("SAVE_ALL_IMAGES", "0")
-        data_dir = Path(os.getenv("DATA_DIR", "/data"))
         self.image_out_dir = data_dir / "images"
         if self.save_images:
             self.image_out_dir.mkdir(parents=True, exist_ok=True)
+
+        # If YOLO weights exist under DATA_DIR, use them to avoid flaky downloads.
+        try:
+            model_path = Path(self.model_name)
+            if (not model_path.is_absolute()) and ("/" not in self.model_name):
+                candidate = data_dir / self.model_name
+                if candidate.exists():
+                    self.model_name = str(candidate)
+        except Exception:
+            pass
 
         self._sequence = 0
         self._last_pub_wall = 0.0
@@ -329,4 +339,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

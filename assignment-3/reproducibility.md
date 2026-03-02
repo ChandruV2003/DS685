@@ -26,6 +26,19 @@ This will:
 
 Images are saved under `data/images/` (named by `sha256`).
 
+### Explore the maze (recommended)
+
+To populate multiple places (grid cells) and observe semantic objects across the map, send a small set of Nav2 goals:
+
+```bash
+docker compose exec -T pipeline bash -lc '
+  source /opt/ros/jazzy/setup.bash
+  source /turtlebot_ws/install/setup.bash
+  source /overlay_ws/install/setup.bash
+  python3 /workspace/scripts/navigate_waypoints.py --loops 2 --timeout 180 --dwell 8
+'
+```
+
 ### Identify the Run A ID (recommended)
 
 Each pipeline run uses a unique UUID `run_id`. Capture it so you can explicitly target Run A for embedding/graph/relocalization:
@@ -68,6 +81,8 @@ To auto-capture crops from the current camera stream:
 docker compose exec -T pipeline python3 /workspace/scripts/capture_query_crops.py --out /data/query --max 3
 ```
 
+If you get repeated `No detections` messages, first navigate closer to a semantic object (e.g., a bench) using the exploration helper above, then re-run crop capture.
+
 ## Re-localize
 
 ```bash
@@ -91,7 +106,7 @@ docker compose run --rm --build semantics /app/graph_query.py --run-id <RUN_A_UU
 ## Generate the report
 
 ```bash
-docker compose run --rm --build ingest python /app/report.py --out /out/report.md
+docker compose run --rm --build ingest python /app/report.py --run-id <RUN_A_UUID> --out /out/report.md
 ```
 
 ## Stop / cleanup
